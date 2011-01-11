@@ -3122,7 +3122,7 @@ public class MessagingController implements Runnable {
                 (NotificationManager) mApplication.getSystemService(Context.NOTIFICATION_SERVICE);
 
         NotificationBuilder builder = NotificationBuilder.createInstance(mApplication);
-        builder.setSmallIcon(R.drawable.stat_notify_email_generic);
+        builder.setSmallIcon(R.drawable.stat_notify_email_yellow);
         builder.setWhen(System.currentTimeMillis());
         builder.setAutoCancel(true);
         builder.setTicker(mApplication.getString(R.string.send_failure_subject));
@@ -4423,7 +4423,7 @@ public class MessagingController implements Runnable {
                 (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         NotificationBuilder builder = NotificationBuilder.createInstance(context);
-        builder.setSmallIcon(R.drawable.stat_notify_email_generic);
+        builder.setSmallIcon(R.drawable.stat_notify_email_yellow);
         builder.setWhen(System.currentTimeMillis());
         builder.setTicker(messageNotice);
 
