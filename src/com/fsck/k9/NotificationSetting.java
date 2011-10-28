@@ -118,7 +118,7 @@ public class NotificationSetting {
         long[] pattern2 = new long[] {100, 500};
         long[] pattern3 = new long[] {200, 200};
         long[] pattern4 = new long[] {200, 500};
-        long[] pattern5 = new long[] {500, 500};
+        long[] pattern5 = new long[] {900, 900};
 
         long[] selectedPattern = pattern0; //default pattern
 
