@@ -26,6 +26,7 @@ import com.fsck.k9.helper.Contacts;
 import com.fsck.k9.Account;
 import com.fsck.k9.helper.DateFormatter;
 import com.fsck.k9.helper.StringUtils;
+import com.fsck.k9.helper.Utility;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Message;
@@ -249,7 +250,7 @@ public class MessageHeader extends ScrollView implements OnClickListener {
 
         mFromView.setText(from);
 
-        if (date != null) {
+        if (date != null && !Utility.isDateToday(message.getSentDate())) {
             mDateView.setText(date);
             mDateView.setVisibility(View.VISIBLE);
         } else {
