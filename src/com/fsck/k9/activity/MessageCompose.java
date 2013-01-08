@@ -390,6 +390,32 @@ public class MessageCompose extends K9Activity implements OnClickListener {
     }
 
     /**
+     * Get intent for composing a new message as a reply to the given message. If replyAll is true
+     * the function is reply all instead of simply reply.
+     * @param context
+     * @param account
+     * @param message
+     * @param replyAll
+     * @param messageBody optional, for decrypted messages, null if it should be grabbed from the given message
+     */
+    public static Intent getActionReplyIntent(
+        Context context,
+        Account account,
+        Message message,
+        boolean replyAll,
+        String messageBody) {
+        Intent i = new Intent(context, MessageCompose.class);
+        i.putExtra(EXTRA_MESSAGE_BODY, messageBody);
+        i.putExtra(EXTRA_MESSAGE_REFERENCE, message.makeMessageReference());
+        if (replyAll) {
+            i.setAction(ACTION_REPLY_ALL);
+        } else {
+            i.setAction(ACTION_REPLY);
+        }
+        return i;
+    }
+
+    /**
      * Compose a new message as a reply to the given message. If replyAll is true the function
      * is reply all instead of simply reply.
      * @param context
@@ -404,15 +430,7 @@ public class MessageCompose extends K9Activity implements OnClickListener {
         Message message,
         boolean replyAll,
         String messageBody) {
-        Intent i = new Intent(context, MessageCompose.class);
-        i.putExtra(EXTRA_MESSAGE_BODY, messageBody);
-        i.putExtra(EXTRA_MESSAGE_REFERENCE, message.makeMessageReference());
-        if (replyAll) {
-            i.setAction(ACTION_REPLY_ALL);
-        } else {
-            i.setAction(ACTION_REPLY);
-        }
-        context.startActivity(i);
+        context.startActivity(getActionReplyIntent(context, account, message, replyAll, messageBody));
     }
 
     /**
@@ -3493,21 +3511,31 @@ public class MessageCompose extends K9Activity implements OnClickListener {
 
             StringBuilder header = new StringBuilder();
             header.append("<div style='font-size:10.0pt;font-family:\"Tahoma\",\"sans-serif\";padding:3.0pt 0in 0in 0in'>\n");
-            header.append("<hr style='border:none;border-top:solid #B5C4DF 1.0pt'>\n"); // This gets converted into a horizontal line during html to text conversion.
+            header.append("<hr style='border:none;border-top:solid #E1E1E1 1.0pt'>\n"); // This gets converted into a horizontal line during html to text conversion.
             if (mSourceMessage.getFrom() != null && Address.toString(mSourceMessage.getFrom()).length() != 0) {
-                header.append("<b>").append(getString(R.string.message_compose_quote_header_from)).append("</b> ").append(HtmlConverter.textToHtmlFragment(Address.toString(mSourceMessage.getFrom()))).append("<br>\n");
+                header.append("<b>").append(getString(R.string.message_compose_quote_header_from)).append("</b> ")
+                    .append(HtmlConverter.textToHtmlFragment(Address.toString(mSourceMessage.getFrom())))
+                    .append("<br>\n");
             }
             if (mSourceMessage.getSentDate() != null) {
-                header.append("<b>").append(getString(R.string.message_compose_quote_header_send_date)).append("</b> ").append(mSourceMessage.getSentDate()).append("<br>\n");
+                header.append("<b>").append(getString(R.string.message_compose_quote_header_send_date)).append("</b> ")
+                    .append(mSourceMessage.getSentDate())
+                    .append("<br>\n");
             }
             if (mSourceMessage.getRecipients(RecipientType.TO) != null && mSourceMessage.getRecipients(RecipientType.TO).length != 0) {
-                header.append("<b>").append(getString(R.string.message_compose_quote_header_to)).append("</b> ").append(HtmlConverter.textToHtmlFragment(Address.toString(mSourceMessage.getRecipients(RecipientType.TO)))).append("<br>\n");
+                header.append("<b>").append(getString(R.string.message_compose_quote_header_to)).append("</b> ")
+                    .append(HtmlConverter.textToHtmlFragment(Address.toString(mSourceMessage.getRecipients(RecipientType.TO))))
+                    .append("<br>\n");
             }
             if (mSourceMessage.getRecipients(RecipientType.CC) != null && mSourceMessage.getRecipients(RecipientType.CC).length != 0) {
-                header.append("<b>").append(getString(R.string.message_compose_quote_header_cc)).append("</b> ").append(HtmlConverter.textToHtmlFragment(Address.toString(mSourceMessage.getRecipients(RecipientType.CC)))).append("<br>\n");
+                header.append("<b>").append(getString(R.string.message_compose_quote_header_cc)).append("</b> ")
+                    .append(HtmlConverter.textToHtmlFragment(Address.toString(mSourceMessage.getRecipients(RecipientType.CC))))
+                    .append("<br>\n");
             }
             if (mSourceMessage.getSubject() != null) {
-                header.append("<b>").append(getString(R.string.message_compose_quote_header_subject)).append("</b> ").append(HtmlConverter.textToHtmlFragment(mSourceMessage.getSubject())).append("<br>\n");
+                header.append("<b>").append(getString(R.string.message_compose_quote_header_subject)).append("</b> ")
+                    .append(HtmlConverter.textToHtmlFragment(mSourceMessage.getSubject()))
+                    .append("<br>\n");
             }
             header.append("</div>\n");
             header.append("<br>\n");
