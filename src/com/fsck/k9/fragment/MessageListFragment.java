@@ -76,10 +76,7 @@ import com.fsck.k9.activity.MessageReference;
 import com.fsck.k9.controller.MessagingController;
 import com.fsck.k9.fragment.ConfirmationDialogFragment;
 import com.fsck.k9.fragment.ConfirmationDialogFragment.ConfirmationDialogFragmentListener;
-import com.fsck.k9.helper.MessageHelper;
-import com.fsck.k9.helper.MergeCursorWithUniqueId;
-import com.fsck.k9.helper.StringUtils;
-import com.fsck.k9.helper.Utility;
+import com.fsck.k9.helper.*;
 import com.fsck.k9.mail.Address;
 import com.fsck.k9.mail.Flag;
 import com.fsck.k9.mail.Folder;
@@ -1666,6 +1663,13 @@ public class MessageListFragment extends SherlockFragment implements OnItemClick
             return view;
         }
 
+        /**
+         * Read the message information out of a <code>Cursor</code> and apply it to a message list item
+         * <code>View</code>.
+         * @param view Message list item view
+         * @param context
+         * @param cursor Cursor from which to read data.
+         */
         @Override
         public void bindView(View view, Context context, Cursor cursor) {
             Account account = getAccountFromCursor(cursor);
@@ -2045,17 +2049,30 @@ public class MessageListFragment extends SherlockFragment implements OnItemClick
         mActionModeCallback.showFlag(isBatchFlag);
     }
 
+    /**
+     * Change the flag on a message
+     * @param adapterPosition Position of the message in the MessageList.
+     * @param flag Flag to change
+     * @param newState Value to set the flag to.
+     */
     private void setFlag(int adapterPosition, final Flag flag, final boolean newState) {
         if (adapterPosition == AdapterView.INVALID_POSITION) {
             return;
         }
 
-        Cursor cursor = (Cursor) mAdapter.getItem(adapterPosition);
+        OverlayCursor cursor = (OverlayCursor) mAdapter.getItem(adapterPosition);
         Account account = mPreferences.getAccount(cursor.getString(ACCOUNT_UUID_COLUMN));
         long id = cursor.getLong(ID_COLUMN);
 
         mController.setFlag(account, Collections.singletonList(Long.valueOf(id)), flag, newState,
                 mThreadedList);
+
+        // Shortcut to show the change in the message list immediately before the re-query of LocalStore completes.
+        final int overlayColumn = flagToColumn(flag);
+        if(overlayColumn >= 0) {
+            cursor.addOverlay(overlayColumn, newState ? 1 : 0);
+            mAdapter.notifyDataSetChanged();
+        }
 
         computeBatchDirection();
     }
@@ -2068,8 +2085,11 @@ public class MessageListFragment extends SherlockFragment implements OnItemClick
         Map<Account, List<Long>> accountMapping = new HashMap<Account, List<Long>>();
         Set<Account> accounts = new HashSet<Account>();
 
+        // The column number we're going to add an overlay for.
+        final int overlayColumn = flagToColumn(flag);
+
         for (int position = 0, end = mAdapter.getCount(); position < end; position++) {
-            Cursor cursor = (Cursor) mAdapter.getItem(position);
+            OverlayCursor cursor = (OverlayCursor) mAdapter.getItem(position);
             long uniqueId = cursor.getLong(mUniqueIdColumn);
 
             if (mSelected.contains(uniqueId)) {
@@ -2993,7 +3013,8 @@ public class MessageListFragment extends SherlockFragment implements OnItemClick
 
         cleanupSelected(cursor);
 
-        mAdapter.swapCursor(cursor);
+        // Setup the (initially-empty) overlay on top of the final query result.
+        mAdapter.swapCursor(new OverlayCursor(cursor));
 
         resetActionMode();
         computeBatchDirection();
@@ -3073,5 +3094,29 @@ public class MessageListFragment extends SherlockFragment implements OnItemClick
 
     private void remoteSearchFinished() {
         mRemoteSearchFuture = null;
+    }
+
+    /**
+     * Get the column number within the <code>THREADED_PROJECTION</code> for a particular flag
+     * @param flag Flag to search for
+     * @return Column number this flag corresponds to.  -1 if not found.
+     */
+    private int flagToColumn(final Flag flag) {
+        int overlayColumn = -1;
+        switch (flag) {
+            case SEEN:
+                overlayColumn = READ_COLUMN;
+                break;
+            case FLAGGED:
+                overlayColumn = FLAGGED_COLUMN;
+                break;
+            case ANSWERED:
+                overlayColumn = ANSWERED_COLUMN;
+                break;
+            case FORWARDED:
+                overlayColumn = FORWARDED_COLUMN;
+                break;
+        }
+        return overlayColumn;
     }
 }
